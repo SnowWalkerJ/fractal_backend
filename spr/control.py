@@ -4,6 +4,7 @@ import psutil
 from typing import Dict, Set, Union
 from .task import Task
 from .pool import WorkerPool
+from .pipe import Pipe
 
 
 class ControlBackend(mp.Process):
@@ -98,7 +99,7 @@ class ControlCenter:
       resources = {}
     resources.setdefault("num_cpus", mp.cpu_count())
     resources.setdefault("memory", psutil.virtual_memory().total)
-    self._pipe, pipe = mp.Pipe()
+    self._pipe, pipe = Pipe()
     self._backend = ControlBackend(pipe, resources)
     self._backend.start()
 

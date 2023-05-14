@@ -2,6 +2,7 @@ import multiprocessing as mp
 import threading
 import time
 
+from .pipe import Pipe
 from .task import Task
 
 
@@ -57,7 +58,7 @@ class WorkerBackend(mp.Process):
 
 class Worker:
   def __init__(self):
-    self._pipe, pipe = mp.Pipe()
+    self._pipe, pipe = Pipe()
     self._backend = WorkerBackend(pipe)
     self._backend.start()
     self._ready = True

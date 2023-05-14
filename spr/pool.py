@@ -42,6 +42,7 @@ class WorkerPool:
     yield from []
 
   def _on_worker_exit(self, worker, event_detail):
-    self._ready_workers.remove(worker)
+    if worker in self._ready_workers:
+      self._ready_workers.remove(worker)
     self._workers.remove(worker)
     yield from []
