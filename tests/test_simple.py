@@ -12,9 +12,7 @@ def b():
 
 
 if __name__ == "__main__":
-  executor = Client()
-  aid = executor.submit(a)
-  bid = executor.submit(b, dependency={aid})
-  executor.wait_all({aid, bid})
-  print("finished")
-  executor.close()
+  client = Client()
+  aid = client.submit(a)
+  bid = client.submit(b, dependency={aid})
+  client.wait_all({aid, bid})

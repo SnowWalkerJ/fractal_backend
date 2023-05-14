@@ -1,5 +1,7 @@
+import atexit
 import random
 from typing import Set, Union, Iterator
+import weakref
 from .task import Task
 from .control import ControlCenter
 
@@ -9,6 +11,7 @@ class Client:
     if resources is None:
       resources = {}
     self.control = ControlCenter(resources)
+    atexit.register(Client._close_left_client, weakref.ref(self))
 
   def submit(self, func, args=(), kwargs={}, dependency=None, resources=None) -> int:
     if resources is None:
@@ -33,3 +36,11 @@ class Client:
 
   def close(self):
     self.control.close()
+
+  def __del__(self):
+    self.close()
+
+  @staticmethod
+  def _close_left_client(ref):
+    if ref:
+      ref().close()

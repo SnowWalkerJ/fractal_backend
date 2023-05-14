@@ -7,13 +7,33 @@ from .pool import WorkerPool
 from .pipe import Pipe
 
 
+class Queue:
+  def __init__(self):
+    self.q = deque()
+
+  def push(self, item):
+    self.q.append(item)
+
+  def front(self):
+    return self.q[0]
+
+  def pop(self):
+    return self.q.popleft()
+
+  def __len__(self):
+    return len(self.q)
+
+  def __bool__(self):
+    return bool(self.q)
+
+
 class ControlBackend(mp.Process):
   def __init__(self, pipe, max_resource: Dict[str, int]):
     super().__init__()
     self.pipe = pipe
     self.pool = WorkerPool()
     self.resource = max_resource.copy()
-    self.available_tasks = deque()
+    self.available_tasks = Queue()
     self.task_forward_relationship: Dict[int, Set[int]] = defaultdict(set)
     self.task_unresolved_dependencies: Dict[int, Set[int]] = defaultdict(set)
     self.tasks: Dict[int, Task] = {}
@@ -39,17 +59,17 @@ class ControlBackend(mp.Process):
       dependency.remove(tid)
       if not dependency:
         self.task_unresolved_dependencies.pop(forward_tid)
-        self.available_tasks.append(forward_tid)
+        self.available_tasks.push(forward_tid)
     self.finished_tasks.add(tid)
     self.try_to_run_task()
 
   def try_to_run_task(self):
     while self.available_tasks:
-      tid = self.available_tasks[0]
+      tid = self.available_tasks.front()
       task = self.tasks[tid]
       if self.resource_available(task.resources):
         self.run_task(task)
-        self.available_tasks.popleft()
+        self.available_tasks.pop()
         self.waiting_tasks.add(tid)
       else:
         break
@@ -82,7 +102,7 @@ class ControlBackend(mp.Process):
     if unresolved_dependencies:
       self.task_unresolved_dependencies[task_id] = unresolved_dependencies
     else:
-      self.available_tasks.append(task_id)
+      self.available_tasks.push(task_id)
       self.try_to_run_task()
 
   def on_cmd_exit(self, _):
@@ -141,6 +161,7 @@ class ControlCenter:
 
   def close(self):
     if self.is_alive():
+      print("closing")
       self._pipe.send(("exit", None))
       self._backend.join()
       self._backend.close()
