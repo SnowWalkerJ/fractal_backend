@@ -2,7 +2,7 @@ import multiprocessing as mp
 import threading
 import time
 
-from .pipe import Pipe
+from spr.common.pipe import Pipe
 from .task import Task
 
 
@@ -84,3 +84,6 @@ class Worker:
 
   def fileno(self) -> int:
     return self._pipe.fileno()
+
+  def is_alive(self) -> bool:
+    return self._backend.is_alive()
