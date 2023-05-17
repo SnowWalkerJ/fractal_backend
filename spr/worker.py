@@ -87,3 +87,6 @@ class Worker:
 
   def is_alive(self) -> bool:
     return self._backend.is_alive()
+
+  def exitcode(self) -> int | None:
+    return self._backend.exitcode

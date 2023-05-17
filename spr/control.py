@@ -34,13 +34,16 @@ class ControlBackend(mp.Process):
       for task, result in self.pool.check_worker_messages():
         self.on_task_finish(task, result)
       if last_check is None or time.time() - last_check > self.CHECK_HEARTBEAT_INTERVAL:
-        dead_worker = self.pool.check_worker_health(self.CHECK_HEARTBEAT_INTERVAL)
-        if dead_worker is not None:
-          if dead_worker.is_alive():
-            raise RuntimeError("a worker is still alive but we lost its heartbeats")
-          else:
-            raise RuntimeError("a worker is dead, we don't know why")
+        self.check_health()
         last_check = time.time()
+
+  def check_health(self):
+    dead_worker = self.pool.check_worker_health(self.CHECK_HEARTBEAT_INTERVAL)
+    if dead_worker is not None:
+      if dead_worker.is_alive():
+        raise RuntimeError("a worker is still alive but we lost its heartbeats")
+      else:
+        raise RuntimeError(f"a worker is dead, exitcode={dead_worker.exitcode()}")
 
   def on_task_finish(self, tid, result):
     task = self.tasks[tid]
